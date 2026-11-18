@@ -1,0 +1,41 @@
+I wrote "IRON MAN" on my PCB. With solder. 😎
+
+Tony Stark had a cave, a box of scraps and JARVIS.
+I had a soldering iron, some empty space on the board and zero self-control.
+
+Now the real story.
+
+Every November, North India gets a free upgrade: air you can chew. 🌫️
+The AQI app has 5 colours: green, yellow, orange, red and "bhai saans mat lo."
+
+For us it's a sore throat and an Instagram story.
+For elderly parents it can mean breathlessness, falling oxygen levels and a hospital visit.
+
+And then there's the Indian parents' official health report, delivered over the phone:
+
+Me: "Tabiyat kaisi hai?"
+Mummy: "Ekdum badhiya."
+(Background: Papa coughing and asking where the Vicks is.)
+
+So I built a health monitor for mine. 🔧
+
+What it does:
+• Measures heart rate and SpO2 (blood oxygen level)
+• Measures body temperature
+• Shows the readings on a small screen on the device
+• Sends live readings to my phone and laptop, from anywhere in the world
+• Sends a phone alert if temperature, oxygen level or heart rate goes outside the safe range
+• Lets you change the WiFi from a phone, with no code changes
+
+Built with: ESP32 · MAX30102 · DS18B20 · SSD1306 OLED · Blynk · WiFiManager
+
+🚀 Coming next: a check-up button.
+One big button. Press it, the device takes proper readings and saves them. After a few weeks there's a real health report to show the doctor.
+
+Disclaimer: this is not a medical device and it doesn't replace a doctor.
+It just replaces "theek hoon" with actual numbers.hlo
+
+Right now this is a small project. How would you turn it into something more useful?
+Any feature, sensor or idea is welcome in the comments 👇
+
+#ESP32 #IoT #Arduino #HealthTech #EmbeddedSystems #AQI #MakersOfIndia

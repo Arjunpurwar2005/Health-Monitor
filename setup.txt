@@ -1,0 +1,252 @@
+==========================================================
+   SETUP - ESP32 Health Monitor (v2/v2.ino)
+==========================================================
+(Blynk website ka layout thoda badal sakta hai, steps same rahenge)
+
+FOLDER ME KYA HAI
+-----------------
+  v2/v2.ino                    -> main project code
+  diagrams/step5_final_v2.png  -> poori wiring
+  tests/test1..test4           -> har module alag se check karne ke liye
+  diagrams/step1..step4        -> har test ki wiring
+
+Pehle tests 1-4 ek ek karke chalao (sab OK ho), phir v2.ino.
+Har test ka sahi output file ke end me "TEST CASES" section me hai.
+
+
+DS18B20 WIRING (adapter NAHI, sirf 4.7k resistor)
+-------------------------------------------------
+Probe ke 3 taar seedhe ESP32 se, aur ek 4.7k resistor (Yellow, Violet,
+Red, Gold rang ki dhaariyan) 3V3 aur DATA ke beech:
+
+  Probe Red    (VCC)  -> ESP32 3V3
+  Probe Black  (GND)  -> ESP32 GND
+  Probe Yellow (DATA) -> ESP32 D4
+  4.7k resistor       -> ek pair 3V3 pe, doosra pair D4 / Yellow pe
+
+Breadboard pe aise:
+  - Yellow taar aur D4 wala jumper ek hi row me lagao
+  - Resistor ka ek pair usi row me, doosra pair 3V3 (+) rail me
+  - Red -> 3V3 (+) rail, Black -> GND (-) rail
+Resistor ki koi direction nahi hoti, kisi bhi taraf laga sakte ho.
+Resistor nahi laga ya dheela hai -> temperature -127 aayega.
+Probe ke taar Red/Black/Yellow na ho (kuch me White/Blue hote hain)
+to packet ya listing pe dekho kaunsa DATA hai.
+Diagram: diagrams/step3_ds18b20.png
+
+
+0. LIBRARIES (Arduino IDE > Library Manager)
+--------------------------------------------
+  Blynk
+  SparkFun MAX3010x Pulse and Proximity Sensor Library
+  OneWire
+  DallasTemperature
+  Adafruit SSD1306   (Adafruit GFX saath me aa jayegi)
+  WiFiManager  (by tzapu)
+
+
+1. ACCOUNT
+----------
+- blynk.cloud pe free account banao
+- Phone pe "Blynk IoT" app install karo, same account se login
+
+
+2. TEMPLATE BANAO
+-----------------
+Developer Zone -> My Templates -> + New Template
+  Name       : Health Monitor
+  Hardware   : ESP32
+  Connection : WiFi
+
+
+3. DATASTREAMS
+--------------
+Template -> Datastreams -> + New Datastream -> Virtual Pin
+
+  Name         Pin   Type      Units   Min - Max
+  ----------   ---   -------   -----   ---------
+  Body Temp    V0    Double    °C      0 - 50
+  Heart Rate   V1    Integer   BPM     0 - 200
+  SpO2         V2    Integer   %       0 - 100
+  Status       V3    String    -       -
+
+
+4. EVENTS (phone notification ke liye)
+--------------------------------------
+Template -> Events & Notifications -> + Add
+
+Event Code EXACTLY yahi likhna (code se match hona chahiye):
+  high_temp
+  low_spo2
+  abnormal_bpm
+
+Har event me "Notifications" tab -> push notification ON -> Save
+
+
+5. DEVICE BANAO
+---------------
+Devices -> + New Device -> From Template -> Health Monitor
+
+Ye 3 lines milengi, v2.ino me sabse upar paste karo:
+
+  #define BLYNK_TEMPLATE_ID   "TMPL...."
+  #define BLYNK_TEMPLATE_NAME "Health Monitor"
+  #define BLYNK_AUTH_TOKEN    "...."
+
+WiFi naam/password code me NAHI daalna, wo phone se set hota hai (step 7).
+
+
+6. MOBILE DASHBOARD (phone app me)
+----------------------------------
+App kholo -> device select -> edit (wrench icon) -> widgets add karo:
+
+  Gauge                  -> V0 (Body Temp)
+  Gauge                  -> V2 (SpO2)
+  Value Display / Chart  -> V1 (Heart Rate)
+  Label                  -> V3 (Status)
+
+Har widget pe tap karo -> uska datastream select karo -> done
+
+
+7. WiFi SET KARNA (pehli baar)
+------------------------------
+1. v2.ino upload karo
+2. OLED ki upar wali line me "Hold BOOT 3s: WiFi" dikhega
+3. ESP32 board ka BOOT button 3 second dabake rakho
+   (hotspot SIRF button se khulta hai, apne aap kabhi nahi)
+4. OLED pe "WiFi SETUP" aayega. Phone ki WiFi settings me
+   "HealthMon-Setup" se judo, password: health123
+5. Setup page apne aap khulega (na khule to browser me 192.168.4.1)
+6. "Configure WiFi" -> apna WiFi chuno -> password -> Save
+7. ESP32 aapke WiFi se jud jayega, board ki blue LED jal jayegi,
+   Blynk "Online" ho jayega, values har 2 second me update hongi
+   WiFi ESP32 me save ho jata hai, har baar dobara nahi karna
+
+NOTE: WiFi 2.4GHz hona chahiye (ESP32 5GHz pe connect nahi hota)
+
+
+8. WiFi BADALNA HO (naya ghar / naya router / password badla)
+-------------------------------------------------------------
+- BOOT button 3 second dabake rakho
+- OLED ki upar wali line me "HealthMon-Setup  AP" aayega
+- Step 7 ke 4-6 dobara karo
+- 3 minute me kuch save nahi kiya to hotspot band, purana WiFi chalta rahega
+
+BOARD LED (GPIO 2): jali = WiFi juda hai, bujhi = WiFi nahi
+(Kisi board pe LED alag pin pe ho to v2.ino me WIFI_LED badlo)
+
+NOTE: Saved WiFi na mile (router band) to ESP32 har 30 sec khud dobara
+try karta rehta hai. Readings OLED pe hamesha chalti rehti hain.
+Hotspot on ho to OLED har 2 sec me setup info (naam/password) dikhata hai.
+NOTE: Galat password save kiya to purana WiFi bhi chala jata hai,
+BOOT 3 sec dabake sahi password daal do.
+NOTE: Power on karte waqt BOOT button mat dabana (upload mode me chala jayega)
+
+
+COMMON PROBLEMS
+---------------
+LED nahi jali / Offline  -> BOOT 3 sec, WiFi password dobara daalo,
+                            WiFi 2.4GHz hai ya nahi check karo
+LED jali par Blynk "--"  -> internet check karo, ya token galat hai
+"Invalid auth token"     -> token dobara copy-paste karo
+Notification nahi aaya   -> event code spelling check karo,
+                            phone settings me Blynk notifications ON karo
+
+
+==========================================================
+   TEST CASES - SUCCESS HUA YA NAHI KAISE PATA KAREIN
+==========================================================
+Har test: upload karo -> Tools > Serial Monitor kholo -> baud 115200.
+Wiring: diagrams/ me usi number wali image.
+
+
+TEST 1: I2C SCANNER  (tests/test1_i2c_scanner)
+----------------------------------------------
+Har 3 second me ye aana chahiye:
+
+  Scanning...
+  Device mila: 0x3C  (OLED)
+  Device mila: 0x57  (MAX30102)
+
+PASS : dono lines aayi (0x3C aur 0x57)
+FAIL : "Koi device nahi mila! Wiring check karo."
+         -> SDA (D21), SCL (D22), 3V3, GND dobara check karo
+       Sirf ek device mila
+         -> jo nahi mila uske 4 taar check karo
+       0x3C ki jagah 0x3D aaya
+         -> OLED ka address 0x3D hai, test2 aur v2.ino me 0x3C ko 0x3D karo
+
+
+TEST 2: OLED  (tests/test2_oled)
+--------------------------------
+Serial Monitor:  OLED OK
+OLED screen pe:
+  Hello!          (bade akshar)
+  Counter: 0      (har second 1 badhega: 1, 2, 3...)
+
+PASS : "Hello!" dikha aur counter badh raha hai
+FAIL : Serial pe "OLED nahi mila!" aur screen kaali
+         -> test 1 dobara chalao, 0x3C aana chahiye
+       Screen pe kachra / adhi screen
+         -> OLED 128x64 hai ya nahi check karo (128x32 alag hota hai)
+
+
+TEST 3: DS18B20 TEMPERATURE  (tests/test3_ds18b20)
+--------------------------------------------------
+Shuru me:  Sensors mile: 1
+Phir har second:
+
+  Temperature: 27.4 C
+  Temperature: 27.5 C
+
+PASS : "Sensors mile: 1" aur room temp lagbhag 25-35 C.
+       Probe mutthi me pakdo -> 1-2 min me 32-35 C tak badhna chahiye
+FAIL : "Sensors mile: 0" aur "Sensor nahi mila! (-127) Wiring check karo."
+         -> 4.7k resistor 3V3 aur D4 ke beech laga hai ya nahi,
+            Yellow taar D4 wali row me hai ya nahi, Red/Black
+            rail me tight hain ya nahi
+       Hamesha 85.0 C
+         -> power theek se nahi mil rahi, VCC 3V3 pe aur GND check karo
+
+
+TEST 4: MAX30102 HEART RATE + SpO2  (tests/test4_max30102)
+---------------------------------------------------------
+Shuru me:  Ungli sensor pe rakho...
+Sensor pe halki laal roshni dikhni chahiye.
+Har ~4 second me ek line aati hai.
+
+Ungli NAHI rakhi:
+  Ungli nahi hai
+
+Ungli halke se rakhi, hilaayi nahi (2-3 line ka wait karo):
+  BPM: 76  |  SpO2: 98 %  |  IR: 112345
+
+PASS : ungli pe IR 50000 se upar, BPM 60-100 ke beech,
+       SpO2 95-100 % (normal insaan ke liye)
+       Kabhi kabhi "--" aana normal hai (ungli hili hogi)
+FAIL : "MAX30102 nahi mila! Wiring check karo." aur aage kuch nahi
+         -> test 1 dobara chalao, 0x57 aana chahiye
+       Ungli rakhne pe bhi "Ungli nahi hai"
+         -> ungli sensor ki roshni ke theek upar rakho
+       Hamesha "--" ya BPM 150+ jaisi ulti values
+         -> ungli bahut zor se daba rahe ho, ya hil rahi hai.
+            Halke se rakho, haath table pe tika do
+
+
+FINAL: v2.ino
+-------------
+Serial Monitor (115200) me:
+
+  Setup complete!
+  Temp: 31.2 C | BPM: 0 | SpO2: 0 % (no finger)
+  Temp: 31.2 C | BPM: 78 | SpO2: 97 %
+
+PASS : har 2 second me ek line, ungli rakhne ke 5-10 sec baad
+       BPM/SpO2 aate hain. OLED pe bhi wahi readings.
+       WiFi set hone ke baad: board ki blue LED jali, OLED ke upar
+       right me "ON", Blynk app me device "Online".
+FAIL : Serial pe "Temp: --"              -> test 3 dobara chalao
+       Shuru me "MAX30102 nahi mila!" /
+       OLED pe "Pulse sensor error"       -> test 4 dobara chalao
+       Shuru me "OLED nahi mila!"         -> test 2 dobara chalao
+       LED jali par OLED pe "--"          -> internet ya Blynk token check karo
